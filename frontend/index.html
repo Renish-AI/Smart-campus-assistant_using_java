@@ -1215,6 +1215,34 @@ Type your question or tap a quick topic below 👇</div>
 //  Simulates Java backend APIs with localStorage data
 // ═══════════════════════════════════════════════════
 
+// ─── API Configuration ───
+// Default to relative path for production; can be overridden if needed.
+const API_BASE_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
+  ? 'http://localhost:8080' 
+  : ''; 
+
+/** Helper for backend API calls */
+async function callApi(endpoint, options = {}) {
+  const url = `${API_BASE_URL}${endpoint}`;
+  try {
+    const res = await fetch(url, {
+      ...options,
+      headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+      }
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ message: 'Unknown error' }));
+      throw new Error(err.message || `API Error: ${res.status}`);
+    }
+    return options.method === 'DELETE' ? true : await res.json();
+  } catch (e) {
+    showToast('Connection Error', e.message, 'error');
+    throw e;
+  }
+}
+
 // ─── In-Memory Database (simulates Java file-based storage) ───
 const DB = {
   users: [
@@ -1309,28 +1337,20 @@ function handleLogin() {
 
   btn.innerHTML = '<span class="spinner" style="width:14px;height:14px;border-width:2px"></span> Signing in...';
 
-  setTimeout(() => {
-    // Java LoginException equivalent
-    const user = DB.users.find(u => u.username.toLowerCase() === username.toLowerCase());
-    if (!user) {
-      showAuthMsg('⚠️ User not found. Check your username or register a new account.');
-      btn.textContent = 'Sign In';
-      return;
-    }
-    if (user.password !== hashPw(password)) {
-      showAuthMsg('⚠️ Incorrect password. Please try again.');
-      btn.textContent = 'Sign In';
-      return;
-    }
-
+  // Call real backend AuthServlet
+  callApi('/auth', {
+    method: 'POST',
+    body: JSON.stringify({ action: 'login', username, password })
+  }).then(user => {
     session = { ...user };
-    delete session.password;
     sessionStorage.setItem('sca_session', JSON.stringify(session));
     btn.textContent = 'Sign In';
     clearAuthMsg();
     showApp();
     showToast('Welcome back!', `Logged in as ${user.fullName}`, 'success');
-  }, 800);
+  }).catch(() => {
+    btn.textContent = 'Sign In';
+  });
 }
 
 // ─── REGISTER ───

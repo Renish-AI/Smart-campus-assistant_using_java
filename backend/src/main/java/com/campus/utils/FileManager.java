@@ -28,7 +28,14 @@ public class FileManager {
     /** Singleton accessor */
     public static synchronized FileManager getInstance(String dataDir) {
         if (instance == null) {
-            instance = new FileManager(dataDir);
+            // Check for DATA_DIR environment variable (used in production/Docker)
+            String envDataDir = System.getenv("DATA_DIR");
+            if (envDataDir != null && !envDataDir.trim().isEmpty()) {
+                instance = new FileManager(envDataDir);
+                LOGGER.info("Using DATA_DIR from environment: " + envDataDir);
+            } else {
+                instance = new FileManager(dataDir);
+            }
         }
         return instance;
     }

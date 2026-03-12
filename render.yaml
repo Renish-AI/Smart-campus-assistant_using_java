@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: smart-campus-backend
+    env: docker
+    plan: free
+    region: ohio
+    dockerContext: backend
+    dockerfilePath: backend/Dockerfile
+    envVars:
+      - key: DATA_DIR
+        value: /var/data
+    disk:
+      name: campus-data
+      mountPath: /var/data
+      sizeGB: 1

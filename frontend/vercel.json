@@ -1,0 +1,8 @@
+{
+  "version": 2,
+  "name": "smart-campus-frontend",
+  "cleanUrls": true,
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/index.html" }
+  ]
+}
